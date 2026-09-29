@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — Connectly</title>
+  <meta name="description" content="Sign up for Connectly and join developer communities." />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="brand">
+        <div class="brand-icon">C</div>
+        <span>Connectly</span>
+      </a>
+      <div id="navbar-actions" class="nav-actions">
+        <!-- Injected dynamically by main.js -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Register Card Container -->
+  <div class="auth-page-container">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.3rem;">C</div>
+        <h1 class="auth-card-title">Join Connectly</h1>
+        <p class="auth-card-subtitle">Connect with devs, share milestones, build your network</p>
+      </div>
+
+      <div id="register-error-alert" class="form-error" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); padding: 10px; border-radius: var(--radius-md); margin-bottom: 16px;"></div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label" for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" placeholder="e.g. Jordan Miller" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-username">Username</label>
+          <input type="text" id="reg-username" placeholder="e.g. jordan_dev (letters, numbers, _)" pattern="^[a-zA-Z0-9_]{3,30}$" title="3-30 alphanumeric characters or underscores" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" placeholder="e.g. jordan@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password</label>
+          <input type="password" id="reg-password" placeholder="At least 6 characters" minlength="6" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+          <input type="password" id="reg-confirm-password" placeholder="Repeat password" minlength="6" required />
+        </div>
+
+        <button type="submit" id="reg-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Create Account
+        </button>
+      </form>
+
+      <p style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-secondary);">
+        Already have an account? <a href="/login.html" style="color: var(--primary); font-weight: 700;">Log in</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from '/js/auth.js';
+    import { showToast } from '/js/main.js';
+
+    // Redirect if already authenticated
+    auth.redirectIfAuthenticated();
+
+    const form = document.getElementById('register-form');
+    const nameInput = document.getElementById('reg-name');
+    const usernameInput = document.getElementById('reg-username');
+    const emailInput = document.getElementById('reg-email');
+    const passwordInput = document.getElementById('reg-password');
+    const confirmPasswordInput = document.getElementById('reg-confirm-password');
+    const submitBtn = document.getElementById('reg-submit-btn');
+    const errorAlert = document.getElementById('register-error-alert');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+
+      const name = nameInput.value.trim();
+      const username = usernameInput.value.trim().toLowerCase();
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      if (password !== confirmPassword) {
+        errorAlert.textContent = 'Passwords do not match.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorAlert.textContent = 'Password must be at least 6 characters.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+
+      try {
+        await auth.register({ name, username, email, password, confirmPassword });
+        showToast('Account created successfully! Welcome to Connectly!', 'success');
+        setTimeout(() => {
+          window.location.href = '/index.html';
+        }, 600);
+      } catch (err) {
+        errorAlert.textContent = err.message || 'Registration failed. Please verify input.';
+        errorAlert.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
+    });
+  </script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

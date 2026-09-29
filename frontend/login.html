@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In — Connectly</title>
+  <meta name="description" content="Log in to your Connectly social account." />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="brand">
+        <div class="brand-icon">C</div>
+        <span>Connectly</span>
+      </a>
+      <div id="navbar-actions" class="nav-actions">
+        <!-- Injected dynamically by main.js -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Card Container -->
+  <div class="auth-page-container">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <div class="brand-icon" style="margin: 0 auto; width: 44px; height: 44px; font-size: 1.3rem;">C</div>
+        <h1 class="auth-card-title">Welcome back</h1>
+        <p class="auth-card-subtitle">Enter your credentials to access your Connectly feed</p>
+      </div>
+
+      <div id="login-error-alert" class="form-error" style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-red); padding: 10px; border-radius: var(--radius-md); margin-bottom: 16px;"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-identifier">Email or Username</label>
+          <input type="text" id="login-identifier" placeholder="e.g. alex@connectly.app or alexrivera" required autofocus />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Log In
+        </button>
+      </form>
+
+      <!-- 1-Click Demo Accounts for Internship Evaluation -->
+      <div class="demo-accounts-box">
+        <div class="demo-accounts-title">
+          <span>⚡️ Quick Demo Accounts (1-Click)</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">
+          Click any persona below to prefill credentials (default password: <code>password123</code>):
+        </p>
+        <div class="demo-account-chips">
+          <button type="button" class="chip-btn" data-email="alex@connectly.app">Alex Rivera</button>
+          <button type="button" class="chip-btn" data-email="sophia@connectly.app">Sophia Chen</button>
+          <button type="button" class="chip-btn" data-email="marcus@connectly.app">Marcus Vance</button>
+          <button type="button" class="chip-btn" data-email="elena@connectly.app">Elena Rostova</button>
+          <button type="button" class="chip-btn" data-email="david@connectly.app">David Kim</button>
+        </div>
+      </div>
+
+      <p style="text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-secondary);">
+        Don't have an account? <a href="/register.html" style="color: var(--primary); font-weight: 700;">Sign up</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from '/js/auth.js';
+    import { showToast } from '/js/main.js';
+
+    // Redirect if already authenticated
+    auth.redirectIfAuthenticated();
+
+    const form = document.getElementById('login-form');
+    const identifierInput = document.getElementById('login-identifier');
+    const passwordInput = document.getElementById('login-password');
+    const submitBtn = document.getElementById('login-submit-btn');
+    const errorAlert = document.getElementById('login-error-alert');
+
+    // Handle Quick Demo Account clicks
+    document.querySelectorAll('.chip-btn').forEach(chip => {
+      chip.addEventListener('click', () => {
+        identifierInput.value = chip.dataset.email;
+        passwordInput.value = 'password123';
+        submitBtn.focus();
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+
+      const emailOrUsername = identifierInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!emailOrUsername || !password) {
+        errorAlert.textContent = 'Please enter both email/username and password.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+
+      try {
+        await auth.login({ emailOrUsername, password });
+        showToast('Login successful! Redirecting...', 'success');
+        
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect') || '/index.html';
+        setTimeout(() => {
+          window.location.href = redirect;
+        }, 600);
+      } catch (err) {
+        errorAlert.textContent = err.message || 'Login failed. Please check your credentials.';
+        errorAlert.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log In';
+      }
+    });
+  </script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

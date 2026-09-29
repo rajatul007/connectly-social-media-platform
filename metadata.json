@@ -1,0 +1,6 @@
+{
+  "name": "Connectly — Mini Social Media Platform",
+  "description": "A modern, responsive mini social media web platform with authentication, user profiles, posts, comments, likes, follow system, and user search.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

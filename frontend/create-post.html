@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Post — Connectly</title>
+  <meta name="description" content="Share your thoughts, code, and milestones on Connectly." />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/index.html" class="brand">
+        <div class="brand-icon">C</div>
+        <span>Connectly</span>
+      </a>
+      <div id="navbar-actions" class="nav-actions">
+        <!-- Injected dynamically by main.js -->
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container single-column" style="margin-top: 30px;">
+    <div class="sidebar-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h2 style="font-size: 1.3rem; font-weight: 700;">Create a New Post</h2>
+        <a href="/index.html" class="btn btn-secondary btn-sm">Back to Feed</a>
+      </div>
+
+      <form id="standalone-create-post-form">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <img id="creator-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=User" class="avatar avatar-md" alt="Avatar" />
+          <div style="flex: 1;">
+            <div id="creator-name" style="font-weight: 700; font-size: 0.95rem;">You</div>
+            <div id="creator-handle" style="font-size: 0.8rem; color: var(--text-muted);">Posting publicly to feed</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <textarea id="standalone-content-input" rows="5" placeholder="Share your latest project, insights, or coding question..." maxlength="500" required style="resize: vertical; font-size: 1rem;"></textarea>
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+            <span id="standalone-char-counter" class="char-counter">0/500</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label" for="standalone-image-input">Attachment Image URL (Optional)</label>
+          <input type="url" id="standalone-image-input" placeholder="https://images.unsplash.com/..." />
+        </div>
+
+        <div id="standalone-preview-container" class="image-preview-container" style="margin-bottom: 16px;">
+          <button type="button" id="standalone-remove-image-btn" class="remove-image-btn">✕</button>
+          <img id="standalone-image-preview" src="" alt="Post image preview" />
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <a href="/index.html" class="btn btn-secondary">Cancel</a>
+          <button type="submit" id="standalone-submit-btn" class="btn btn-primary" style="padding: 10px 24px;">Publish Post</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav id="mobile-bottom-nav" class="mobile-bottom-nav">
+    <!-- Populated by main.js -->
+  </nav>
+
+  <script type="module">
+    import { auth } from '/js/auth.js';
+    import { api } from '/js/api.js';
+    import { showToast } from '/js/main.js';
+
+    // Must be authenticated to access
+    if (!auth.requireAuth()) {
+      // Will redirect
+    } else {
+      const user = auth.getUser();
+      const avatarEl = document.getElementById('creator-avatar');
+      const nameEl = document.getElementById('creator-name');
+      const handleEl = document.getElementById('creator-handle');
+
+      if (user) {
+        if (avatarEl) avatarEl.src = user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
+        if (nameEl) nameEl.textContent = user.name;
+        if (handleEl) handleEl.textContent = `@${user.username}`;
+      }
+
+      const textarea = document.getElementById('standalone-content-input');
+      const charCounter = document.getElementById('standalone-char-counter');
+      const imageInput = document.getElementById('standalone-image-input');
+      const previewContainer = document.getElementById('standalone-preview-container');
+      const previewImg = document.getElementById('standalone-image-preview');
+      const removeBtn = document.getElementById('standalone-remove-image-btn');
+      const submitBtn = document.getElementById('standalone-submit-btn');
+
+      textarea.addEventListener('input', () => {
+        const len = textarea.value.length;
+        charCounter.textContent = `${len}/500`;
+        charCounter.className = 'char-counter';
+        if (len > 450) charCounter.classList.add('warning');
+        if (len >= 500) charCounter.classList.add('danger');
+      });
+
+      imageInput.addEventListener('input', () => {
+        const url = imageInput.value.trim();
+        if (url) {
+          previewImg.src = url;
+          previewContainer.classList.add('visible');
+        } else {
+          previewContainer.classList.remove('visible');
+        }
+      });
+
+      removeBtn.addEventListener('click', () => {
+        imageInput.value = '';
+        previewImg.src = '';
+        previewContainer.classList.remove('visible');
+      });
+
+      document.getElementById('standalone-create-post-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = textarea.value.trim();
+        const image = imageInput.value.trim();
+
+        if (!content) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publishing...';
+
+        try {
+          const res = await api.posts.create({ content, image });
+          if (res.success && res.data) {
+            showToast('Post published successfully!', 'success');
+            setTimeout(() => {
+              window.location.href = `/post.html?id=${res.data._id}`;
+            }, 500);
+          }
+        } catch (err) {
+          showToast(err.message || 'Failed to publish post', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publish Post';
+        }
+      });
+    }
+  </script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
